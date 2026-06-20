@@ -13,5 +13,6 @@ pillow>=10.1.0
 python-dotenv>=1.0.0
 email-validator>=2.1.0.post1
 Flask-Mail>0.9.1
-requests>=2.31.0
-gunicorn>=21.2.0
+requests>2.31.0
+joblib>=1.4.0
+gunicorn>21.2.0
