@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Deletion Requests{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="mb-4">Pending Evidence Deletion Requests</h2>
+  {% if requests %}
+  <table class="table table-hover">
+    <thead class="thead-light">
+      <tr>
+        <th scope="col">#</th>
+        <th scope="col">Evidence ID</th>
+        <th scope="col">Requested By</th>
+        <th scope="col">Reason</th>
+        <th scope="col">Requested At</th>
+        <th scope="col">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for req in requests %}
+      <tr>
+        <th scope="row">{{ loop.index }}</th>
+        <td>{{ req.evidence_id }}</td>
+        <td>{{ req.requested_by }}</td>
+        <td>{{ req.reason }}</td>
+        <td>{{ req.requested_at }}</td>
+        <td>
+          <div class="d-flex gap-2">
+            <form action="{{ url_for('evidence.approve_deletion', id=req.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to approve and PERMANENTLY delete this evidence?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button type="submit" class="btn btn-sm btn-success"><i class="fas fa-check me-1"></i>Approve</button>
+            </form>
+            <form action="{{ url_for('evidence.reject_deletion', id=req.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to reject this request?');">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-times me-1"></i>Reject</button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-muted">No pending deletion requests.</p>
+  {% endif %}
+</div>
+{% endblock %}

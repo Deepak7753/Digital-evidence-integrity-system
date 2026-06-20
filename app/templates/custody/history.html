@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Digital Evidence Integrity System - Custody Timeline{% endblock %}
+
+{% block content %}
+<div class="page-header mb-4">
+    <div>
+        <h1 class="page-title"><i class="fas fa-history me-2 text-primary"></i>Chain of Custody History</h1>
+        <p class="page-subtitle">Legally compliant audit trail tracking all hands accessing, transferring or verifying this file</p>
+    </div>
+    <a href="{{ url_for('evidence.detail', id=evidence.id) }}" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-2"></i> Back
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <!-- Custody Ledger Timeline -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-table me-2"></i>Custody Ledger Timeline
+            </div>
+            <div class="card-body">
+                <div class="timeline mt-2">
+                    {% for record in records %}
+                    <div class="timeline-item">
+                        <div class="fw-bold fs-6 mb-1">{{ record.action }}</div>
+                        <div class="text-muted small">
+                            <span class="d-block mb-2">
+                                <strong>From:</strong> {{ record.from_user.fullname if record.from_user else 'Intake Source' }} 
+                                <i class="fas fa-arrow-right mx-2"></i>
+                                <strong>To:</strong> {{ record.to_user.fullname if record.to_user else 'System' }}
+                            </span>
+                            <span class="d-block"><i class="fas fa-clock me-1"></i> {{ record.timestamp.strftime('%Y-%m-%d %H:%M:%S UTC') }}</span>
+                            {% if record.remarks %}
+                                <div class="mt-2 p-2 bg-light rounded border">
+                                    <em>{{ record.remarks }}</em>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-muted text-center py-4">No custody records found.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Quick Specs -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-info-circle me-2"></i>Evidence Details
+            </div>
+            <div class="card-body">
+                <div>
+                    <div class="text-muted small text-uppercase fw-bold mb-1">File Name</div>
+                    <div class="mb-3">{{ evidence.file_name }}</div>
+                    
+                    <div class="text-muted small text-uppercase fw-bold mb-1">SHA-256 Hash</div>
+                    <code class="d-block text-break mb-3 text-info">{{ evidence.original_hash }}</code>
+                    
+                    <div class="text-muted small text-uppercase fw-bold mb-1">Case File</div>
+                    <div>
+                        {% if evidence.current_case %}
+                            <span class="badge bg-light text-dark">{{ evidence.current_case.case_number }}</span>
+                        {% else %}
+                            <span class="text-muted">Unlinked</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

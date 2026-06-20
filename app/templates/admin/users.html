@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Digital Evidence Integrity System - Manage Staff{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-users-gear me-2 text-primary"></i>Manage Staff Directory</h1>
+        <p class="page-subtitle">Control authentication access, designate system access roles, and lock user profiles</p>
+    </div>
+    <a href="{{ url_for('admin.pending_approvals') }}" class="btn btn-warning btn-sm">
+        <i class="fas fa-check-circle me-1"></i> Pending Approvals ({{ users | selectattr('approval_status', 'equalto', 'pending') | list | length }})
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-table me-2"></i>Staff Authorization List
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Name / Designation</th>
+                                <th>Username</th>
+                                <th>Email Address</th>
+                                <th>Role Access</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                            <tr>
+                                <td class="fw-bold">
+                                    {{ user.fullname }}
+                                    {% if user.id == current_user.id %}
+                                        <span class="badge bg-secondary ms-1">You</span>
+                                    {% endif %}
+                                </td>
+                                <td><code>{{ user.username }}</code></td>
+                                <td>{{ user.email }}</td>
+                                <td>
+                                    <form action="{{ url_for('admin.change_role', user_id=user.id) }}" method="POST" class="d-flex align-items-center gap-1">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <select name="role" class="form-select form-select-sm w-auto" {% if user.id == current_user.id %}disabled{% endif %} onchange="document.getElementById('apply-btn-{{ user.id }}').style.display='inline-block'">
+                                            <option value="admin" {% if user.has_role('admin') %}selected{% endif %}>Admin</option>
+                                            <option value="investigator" {% if user.has_role('investigator') %}selected{% endif %}>Investigator</option>
+                                            <option value="auditor" {% if user.has_role('auditor') %}selected{% endif %}>Auditor</option>
+                                        </select>
+                                        <button type="submit" id="apply-btn-{{ user.id }}" class="btn btn-sm btn-primary" style="display:none" {% if user.id == current_user.id %}disabled{% endif %}>Apply</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    {% if user.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Locked</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <form action="{{ url_for('admin.toggle_status', user_id=user.id) }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        {% if user.is_active %}
+                                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Lock User" {% if user.id == current_user.id %}disabled{% endif %}>
+                                                <i class="fas fa-user-slash"></i>
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" class="btn btn-sm btn-outline-success" title="Unlock User" {% if user.id == current_user.id %}disabled{% endif %}>
+                                                <i class="fas fa-user-check"></i>
+                                            </button>
+                                        {% endif %}
+                                    </form>
+                                    
+                                    <form action="{{ url_for('admin.delete_user', user_id=user.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to PERMANENTLY delete this user account? This cannot be undone.');">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1" title="Delete User" {% if user.id == current_user.id %}disabled{% endif %}>
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

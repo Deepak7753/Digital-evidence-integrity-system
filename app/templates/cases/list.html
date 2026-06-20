@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block title %}Digital Evidence Integrity System — Case Files{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-folder-open me-2 text-primary"></i>Case Files</h1>
+        <p class="page-subtitle">Manage investigative folders, assign staff, and track evidence</p>
+    </div>
+    {% if current_user.has_role('admin') or current_user.has_role('investigator') %}
+    <a href="{{ url_for('cases.create') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>New Case
+    </a>
+    {% endif %}
+</div>
+
+<style>
+    /* Prevent dropdown clipping in responsive tables */
+    .table-responsive {
+        overflow: visible !important;
+    }
+</style>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Case ID</th>
+                    <th>Title</th>
+                    <th>Investigator</th>
+                    <th>Evidence</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for case in cases %}
+                <tr>
+                    <td>
+                        <span class="badge bg-primary" style="font-size:0.8rem; font-family:monospace;">{{ case.case_number }}</span>
+                    </td>
+                    <td>
+                        <div style="font-weight:600;">{{ case.name }}</div>
+                        <div class="text-muted text-truncate" style="font-size:0.8rem; max-width:220px;">{{ case.description or 'No description.' }}</div>
+                    </td>
+                    <td class="text-muted" style="font-size:0.88rem;">{{ case.investigator.fullname if case.investigator else '—' }}</td>
+                    <td>
+                        <span class="badge bg-light border text-dark" style="font-size:0.8rem;">{{ case.evidence_links | length }} items</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            {% if case.status == 'Open' %}
+                                <span class="badge bg-info">Open</span>
+                            {% elif case.status == 'Active' %}
+                                <span class="badge bg-primary">Active</span>
+                            {% elif case.status == 'Pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% elif case.status == 'Complete' %}
+                                <span class="badge bg-success">Complete</span>
+                            {% elif case.status == 'Closed' %}
+                                <span class="badge bg-dark">Closed</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ case.status }}</span>
+                            {% endif %}
+                            
+                            {% if current_user.has_role('admin') or case.investigator_id == current_user.id %}
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-link text-muted p-0 border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Change Status">
+                                    <i class="fas fa-caret-down"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow-sm" style="font-size: 0.85rem;">
+                                    <li><h6 class="dropdown-header">Set Status To</h6></li>
+                                    <li>
+                                        <form action="{{ url_for('cases.change_status', id=case.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="status" value="Active">
+                                            <button type="submit" class="dropdown-item"><i class="fas fa-play-circle text-primary me-2"></i>Active</button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form action="{{ url_for('cases.change_status', id=case.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="status" value="Pending">
+                                            <button type="submit" class="dropdown-item"><i class="fas fa-clock text-warning me-2"></i>Pending</button>
+                                        </form>
+                                    </li>
+                                    <li>
+                                        <form action="{{ url_for('cases.change_status', id=case.id) }}" method="POST">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <input type="hidden" name="status" value="Complete">
+                                            <button type="submit" class="dropdown-item"><i class="fas fa-check-circle text-success me-2"></i>Complete</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td class="text-muted" style="font-size:0.83rem;">{{ case.created_at.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('cases.detail', id=case.id) }}" class="btn btn-outline-primary" title="View"><i class="fas fa-folder-open"></i></a>
+                            {% if current_user.has_role('admin') or case.investigator_id == current_user.id %}
+                            <a href="{{ url_for('cases.edit', id=case.id) }}" class="btn btn-outline-secondary" title="Edit"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <i class="fas fa-folder-minus d-block"></i>
+                            <p>No cases registered yet.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

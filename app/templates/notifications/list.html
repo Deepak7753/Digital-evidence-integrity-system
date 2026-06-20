@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block title %}Digital Evidence Integrity System — Alerts{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-bell me-2 text-primary"></i>Alerts</h1>
+        <p class="page-subtitle">System activities, uploads, transfers, and security logs</p>
+    </div>
+    <form action="{{ url_for('notifications.read_all') }}" method="POST" class="d-inline">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button type="submit" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-check-double me-1"></i> Mark All as Read
+        </button>
+    </form>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        {% if notifications %}
+        <div class="card">
+            <div class="card-body p-0">
+                {% for notif in notifications %}
+                <div class="d-flex align-items-start gap-3 px-4 py-3 notification-item-row {% if not loop.last %}border-bottom{% endif %} {% if notif.is_read %}opacity-50{% endif %}" style="transition: opacity 0.2s;">
+                    
+                    <!-- Icon -->
+                    <div class="mt-1">
+                        {% if notif.type == 'tamper' %}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:var(--danger-light);">
+                                <i class="fas fa-triangle-exclamation" style="color:var(--danger);font-size:0.9rem;"></i>
+                            </div>
+                        {% elif notif.type == 'upload' %}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:var(--primary-light);">
+                                <i class="fas fa-upload" style="color:var(--primary);font-size:0.9rem;"></i>
+                            </div>
+                        {% elif notif.type == 'custody' %}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:var(--warning-light);">
+                                <i class="fas fa-right-left" style="color:var(--warning);font-size:0.9rem;"></i>
+                            </div>
+                        {% else %}
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;background:var(--info-light);">
+                                <i class="fas fa-circle-info" style="color:var(--info);font-size:0.9rem;"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Content -->
+                    <div class="flex-grow-1" style="min-width:0;">
+                        <div class="d-flex align-items-center gap-2 mb-1">
+                            <span class="fw-600" style="font-size:0.9rem;font-weight:600;">{{ notif.title }}</span>
+                            {% if not notif.is_read %}
+                                <span class="badge bg-primary" style="font-size:0.6rem;">NEW</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-muted mb-1" style="font-size:0.85rem;line-height:1.4;">{{ notif.message }}</p>
+                        <small class="text-muted" style="font-size:0.75rem;">
+                            <i class="fas fa-clock me-1"></i>{{ notif.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+                        </small>
+                    </div>
+
+                    <!-- Mark Read -->
+                    {% if not notif.is_read %}
+                    <button class="btn btn-sm btn-link text-primary text-decoration-none notif-mark-read p-0 mt-1" data-id="{{ notif.id }}" title="Mark as read">
+                        <i class="fas fa-check"></i>
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-bell-slash d-block mb-3" style="font-size:2rem;color:var(--text-light);opacity:0.4;"></i>
+                <p class="text-muted mb-0" style="font-size:0.9rem;">No notifications yet.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

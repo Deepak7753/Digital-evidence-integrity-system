@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Digital Evidence Integrity System - Audit Logs{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-clock-rotate-left me-2 text-primary"></i>Audit Logs</h1>
+        <p class="page-subtitle">Unmodifiable chronological register of all staff actions, downloads, authentications and verification operations</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-table me-2"></i>System Event Ledger
+            </div>
+            <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle" id="audit-logs-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 15%;">Timestamp (UTC)</th>
+                            <th style="width: 15%;">Operator</th>
+                            <th style="width: 35%;">Action</th>
+                            <th style="width: 15%;">IP Address</th>
+                            <th style="width: 20%;">User Agent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr class="{% if 'Tampering' in log.action or 'Locked' in log.action or 'Failed' in log.action %}table-light{% endif %}">
+                            <td class="text-muted text-nowrap">{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            <td class="fw-bold">
+                                {% if log.user %}
+                                    {{ log.user.fullname }} <br><code style="font-size: 0.75rem;">{{ log.user.username }}</code>
+                                {% else %}
+                                    <span class="text-muted">System</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if 'Tamper' in log.action or 'Mismatch' in log.action %}
+                                    <span class="badge bg-danger text-white"><i class="fas fa-triangle-exclamation me-1"></i> {{ log.action }}</span>
+                                {% else %}
+                                    {{ log.action }}
+                                {% endif %}
+                            </td>
+                            <td><code>{{ log.ip_address or 'N/A' }}</code></td>
+                            <td class="text-muted text-truncate" title="{{ log.browser or 'N/A' }}">{{ log.browser or 'N/A' }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No events logged in system audit database.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,219 @@
+{% extends 'base.html' %}
+{% block title %}Digital Evidence Integrity System — Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-th-large me-2 text-primary"></i>Dashboard</h1>
+        <p class="page-subtitle">Welcome back, <strong>{{ current_user.fullname }}</strong> &mdash;
+            <span class="badge bg-primary" style="font-size:0.75rem;">{{ current_user.primary_role }}</span>
+        </p>
+    </div>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-lg-2">
+        <a href="{{ url_for('evidence.list_evidence') }}" class="stat-card text-decoration-none">
+            <div>
+                <div class="stat-label">Evidence</div>
+                <div class="stat-value">{{ total_evidence }}</div>
+            </div>
+            <div class="stat-icon stat-icon-blue"><i class="fas fa-boxes-stacked"></i></div>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <a href="{{ url_for('cases.list_cases') }}" class="stat-card text-decoration-none">
+            <div>
+                <div class="stat-label">Cases</div>
+                <div class="stat-value">{{ active_cases }}</div>
+            </div>
+            <div class="stat-icon stat-icon-teal"><i class="fas fa-folder-open"></i></div>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <a href="{{ url_for('evidence.list_evidence') }}?status=Verified" class="stat-card text-decoration-none">
+            <div>
+                <div class="stat-label">Verified</div>
+                <div class="stat-value text-success">{{ verified_files }}</div>
+            </div>
+            <div class="stat-icon stat-icon-green"><i class="fas fa-shield-halved"></i></div>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <a href="{{ url_for('evidence.list_evidence') }}?status=Warning" class="stat-card text-decoration-none">
+            <div>
+                <div class="stat-label">Pending</div>
+                <div class="stat-value text-warning">{{ pending_verification }}</div>
+            </div>
+            <div class="stat-icon stat-icon-yellow"><i class="fas fa-circle-exclamation"></i></div>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <a href="{{ url_for('evidence.list_evidence') }}?status=Tampered" class="stat-card text-decoration-none">
+            <div>
+                <div class="stat-label">Tampered</div>
+                <div class="stat-value {% if tampered_files > 0 %}text-danger{% endif %}">{{ tampered_files }}</div>
+            </div>
+            <div class="stat-icon stat-icon-red"><i class="fas fa-circle-xmark"></i></div>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <a href="{{ url_for('admin.list_users') }}" class="stat-card text-decoration-none">
+            <div>
+                <div class="stat-label">Staff</div>
+                <div class="stat-value">{{ total_users }}</div>
+            </div>
+            <div class="stat-icon stat-icon-blue"><i class="fas fa-users"></i></div>
+        </a>
+    </div>
+</div>
+
+
+
+<!-- Tamper Alert Banner -->
+{% if current_user.has_role('admin') and tamper_alerts %}
+<div class="alert alert-danger d-flex align-items-start gap-3 mb-4" role="alert">
+    <i class="fas fa-triangle-exclamation fs-4 flex-shrink-0 mt-1"></i>
+    <div>
+        <strong>Cryptographic Mismatch Detected</strong><br>
+        <span class="small">Evidence file(s) have mismatched SHA-256 signatures. Review immediately.</span><br>
+        <a href="{{ url_for('admin.tamper_alerts') }}" class="btn btn-danger btn-sm mt-2">Inspect Alerts</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-4">
+        <div class="chart-card">
+            <div class="chart-title"><i class="fas fa-chart-pie me-1 text-primary"></i>Evidence Categories</div>
+            <canvas id="chart-categories"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-8">
+        <div class="chart-card">
+            <div class="chart-title"><i class="fas fa-chart-line me-1 text-primary"></i>Upload Trends</div>
+            <canvas id="chart-trends"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title"><i class="fas fa-chart-bar me-1 text-primary"></i>Custody Operations</div>
+            <canvas id="chart-custody"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-card">
+            <div class="chart-title"><i class="fas fa-chart-bar me-1 text-primary"></i>Staff Activity Logs</div>
+            <canvas id="chart-activity"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tables Row -->
+<div class="row g-3">
+    <!-- Recent Evidence -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header justify-content-between">
+                <span><i class="fas fa-shield-halved me-2 text-primary"></i>Recent Evidence</span>
+                <a href="{{ url_for('evidence.list_evidence') }}" class="btn btn-outline-primary btn-sm">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>File Name</th>
+                            <th>Case</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ev in recent_evidence %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('evidence.detail', id=ev.id) }}">{{ ev.file_name }}</a>
+                            </td>
+                            <td class="text-muted">{{ ev.current_case.case_number if ev.current_case else '—' }}</td>
+                            <td class="text-muted">{{ ev.upload_date.strftime('%Y-%m-%d') }}</td>
+                            <td>
+                                {% if ev.status == 'Verified' %}
+                                <span class="badge badge-verified">Verified</span>
+                                {% elif ev.status == 'Tampered' %}
+                                <span class="badge badge-tampered">Tampered</span>
+                                {% else %}
+                                <span class="badge badge-pending">Pending</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state py-3">
+                                    <i class="fas fa-inbox d-block"></i>
+                                    <p>No evidence uploaded yet</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chain of Custody -->
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-link me-2 text-primary"></i>Chain of Custody
+            </div>
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Operator</th>
+                            <th>Action</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in recent_custody %}
+                        <tr>
+                            <td>
+                                <a href="{{ url_for('evidence.detail', id=record.evidence.id) }}">{{
+                                    record.evidence.file_name }}</a>
+                            </td>
+                            <td class="text-muted">{{ record.to_user.fullname if record.to_user else 'System' }}</td>
+                            <td><span class="badge bg-secondary">{{ record.action }}</span></td>
+                            <td class="text-muted" style="font-size:0.8rem;">{{ record.timestamp.strftime('%m-%d %H:%M')
+                                }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4">
+                                <div class="empty-state py-3">
+                                    <i class="fas fa-inbox d-block"></i>
+                                    <p>No custody events logged yet</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}Digital Evidence Integrity System - Transfer Custody{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="min-height: 75vh; align-items: center;">
+    <div class="col-md-8 col-lg-6">
+        <div class="text-center mb-4">
+            <i class="fas fa-right-left text-cyan fs-1 mb-2 glow-text-cyan"></i>
+            <h2 class="cyber-header fw-bold text-light">TRANSFER FORENSIC CUSTODY</h2>
+            <p class="text-muted">Formally log the physical or digital handoff of digital evidence</p>
+        </div>
+        
+        <div class="card cyber-card p-4">
+            <!-- Evidence Quick Details -->
+            <div class="border-bottom border-secondary pb-3 mb-4">
+                <span class="text-muted small d-block">EVIDENCE BEING TRANSFERRED</span>
+                <strong class="text-cyan fs-5">{{ evidence.title }}</strong>
+                <div class="small text-muted mt-1">
+                    Original Hash: <code class="text-light">{{ evidence.original_hash[:20] }}...</code> <br>
+                    Lead Case: <span class="badge bg-secondary">{{ evidence.current_case.case_number if evidence.current_case else 'N/A' }}</span>
+                </div>
+            </div>
+
+            <!-- Transfer form -->
+            <form method="POST" action="{{ url_for('custody.transfer', evidence_id=evidence.id) }}">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    <label for="to_user_id" class="form-cyber-label">Transfer Custody To (Active Staff)</label>
+                    {{ form.to_user_id(class="form-select form-cyber-input") }}
+                    <div class="form-text text-muted" style="font-size: 0.75rem;">Selected user takes legal and computational custody of the evidence file.</div>
+                    {% if form.to_user_id.errors %}
+                        {% for error in form.to_user_id.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <label for="remarks" class="form-cyber-label">Custody Handover Remarks / Purpose</label>
+                    {{ form.remarks(class="form-control form-cyber-input", rows="4", placeholder="Specify transfer reason (e.g. transfer to malware lab, courtroom display, analysis verification)") }}
+                    {% if form.remarks.errors %}
+                        {% for error in form.remarks.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+                <div class="d-grid gap-2">
+                    {{ form.submit(class="btn btn-cyber py-2") }}
+                    <a href="{{ url_for('evidence.detail', id=evidence.id) }}" class="btn btn-cyber-outline py-2">Cancel Handover</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

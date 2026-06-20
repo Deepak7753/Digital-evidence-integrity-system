@@ -1,0 +1,29 @@
+# Environment Variables
+.env
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+env/
+
+# Application specific
+instance/
+chainproof.db
+*.sqlite
+*.sqlite3
+*.db
+instance/*.db
+encrypted/
+reports/
+uploads/
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

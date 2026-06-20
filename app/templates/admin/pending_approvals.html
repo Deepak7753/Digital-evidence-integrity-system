@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}User Approval Management - Digital Evidence Integrity System{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-lock me-2 text-primary"></i>User Account Approval Management</h1>
+        <p class="page-subtitle">No new user accounts can login without admin approval. Manage user registrations below.</p>
+    </div>
+</div>
+
+<!-- Pending Approvals Tab -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-hourglass-end me-2"></i>Pending Approvals ({{ pending_users|length }})</h5>
+    </div>
+    <div class="card-body">
+        {% if pending_users %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Requested Role</th>
+                            <th>Registration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in pending_users %}
+                        <tr>
+                            <td><code>{{ user.username }}</code></td>
+                            <td>{{ user.fullname }}</td>
+                            <td><a href="mailto:{{ user.email }}">{{ user.email }}</a></td>
+                            <td>
+                                <span class="badge bg-info">{{ user.primary_role|upper }}</span>
+                            </td>
+                            <td>{{ user.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <!-- Approve Button -->
+                                <form method="POST" action="{{ url_for('admin.approve_user', user_id=user.id) }}" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Approve {{ user.username }}?')">
+                                        <i class="fas fa-check me-1"></i> Approve
+                                    </button>
+                                </form>
+                                
+                                <!-- Reject Button -->
+                                <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ user.id }}">
+                                    <i class="fas fa-times me-1"></i> Reject
+                                </button>
+
+                                <!-- Reject Modal -->
+                                <div class="modal fade" id="rejectModal{{ user.id }}" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Reject User: {{ user.username }}</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <form method="POST" action="{{ url_for('admin.reject_user', user_id=user.id) }}">
+                                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                <div class="modal-body">
+                                                    <div class="mb-3">
+                                                        <label for="reason{{ user.id }}" class="form-label">Rejection Reason:</label>
+                                                        <textarea class="form-control" id="reason{{ user.id }}" name="reason" rows="3" placeholder="Explain why..." required></textarea>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-danger">Reject Account</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-success" role="alert">
+                <i class="fas fa-check-circle me-2"></i> No pending approvals. All registered users have been processed.
+            </div>
+        {% endif %}
+    </div>
+</div>
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0">✅ Approved Users ({{ approved_users|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if approved_users %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-success">
+                            <tr>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Role</th>
+                                <th>Approved Date</th>
+                                <th>Approved By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in approved_users %}
+                            <tr>
+                                <td><code>{{ user.username }}</code></td>
+                                <td>{{ user.fullname }}</td>
+                                <td><span class="badge bg-success">{{ user.primary_role|upper }}</span></td>
+                                <td>{{ user.approval_date.strftime('%Y-%m-%d %H:%M') if user.approval_date else 'N/A' }}</td>
+                                <td>
+                                    {% if user.approved_by_id %}
+                                        {% set approver = user.query.get(user.approved_by_id) %}
+                                        {{ approver.username if approver else 'Admin' }}
+                                    {% else %}
+                                        System
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No approved users yet.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Rejected Users Tab -->
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">❌ Rejected Users ({{ rejected_users|length }})</h5>
+        </div>
+        <div class="card-body">
+            {% if rejected_users %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead class="table-danger">
+                            <tr>
+                                <th>Username</th>
+                                <th>Full Name</th>
+                                <th>Role</th>
+                                <th>Rejected Date</th>
+                                <th>Rejected By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in rejected_users %}
+                            <tr class="table-danger">
+                                <td><code>{{ user.username }}</code></td>
+                                <td>{{ user.fullname }}</td>
+                                <td><span class="badge bg-danger">{{ user.primary_role|upper }}</span></td>
+                                <td>{{ user.approval_date.strftime('%Y-%m-%d %H:%M') if user.approval_date else 'N/A' }}</td>
+                                <td>
+                                    {% if user.approved_by_id %}
+                                        {% set rejector = user.query.get(user.approved_by_id) %}
+                                        {{ rejector.username if rejector else 'Admin' }}
+                                    {% else %}
+                                        System
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No rejected users.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-4">
+        <a href="{{ url_for('admin.list_users') }}" class="btn btn-secondary">
+            ← Back to User Management
+        </a>
+    </div>
+</div>
+
+<style>
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,.05);
+    }
+    .modal-dialog {
+        animation: slideIn 0.3s ease-out;
+    }
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style>
+{% endblock %}

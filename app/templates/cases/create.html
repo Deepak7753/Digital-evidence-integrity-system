@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Digital Evidence Integrity System — New Case{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-md-10">
+
+        <div class="page-header">
+            <div>
+                <h1 class="page-title"><i class="fas fa-folder-plus me-2 text-primary"></i>New Case</h1>
+                <p class="page-subtitle">Create a forensic container for digital evidence</p>
+            </div>
+            <a href="{{ url_for('cases.list_cases') }}" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-arrow-left me-1"></i> Cancel
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="fas fa-folder-open text-primary me-2"></i>Case Information</div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('cases.create') }}">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        <label for="case_number" class="form-label">Case ID Number</label>
+                        {{ form.case_number(class="form-control", placeholder="e.g. CP-2026-0001", id="case_number") }}
+                        <div class="form-text">Standard format: CP-YYYY-XXXX</div>
+                        {% if form.case_number.errors %}{% for e in form.case_number.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Case Title</label>
+                        {{ form.name(class="form-control", placeholder="e.g. Ransomware Breach Analysis", id="name") }}
+                        {% if form.name.errors %}{% for e in form.name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}{% endif %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">Status</label>
+                            {{ form.status(class="form-select", id="status") }}
+                            {% if form.status.errors %}{% for e in form.status.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="investigator_id" class="form-label">Lead Investigator</label>
+                            {{ form.investigator_id(class="form-select", id="investigator_id") }}
+                            {% if form.investigator_id.errors %}{% for e in form.investigator_id.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="description" class="form-label">Case Summary</label>
+                        {{ form.description(class="form-control", rows="4", placeholder="Describe the incident, target devices, findings...", id="description") }}
+                        {% if form.description.errors %}{% for e in form.description.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}{% endif %}
+                    </div>
+
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary py-2") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

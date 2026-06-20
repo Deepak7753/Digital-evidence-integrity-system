@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Digital Evidence Integrity System - Tamper Alerts{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-triangle-exclamation me-2 text-danger"></i>Tamper Incident Center</h1>
+        <p class="page-subtitle">Review cryptographic integrity mismatches, missing physical assets alerts, and register resolutions</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-exclamation-circle me-2"></i>Tampering Incidents Directory
+            </div>
+            <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Created Date</th>
+                            <th>Target Evidence Item</th>
+                            <th>Incident Type</th>
+                            <th>Narrative Description</th>
+                            <th>Verification Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alerts %}
+                        <tr class="{% if alert.status == 'Active' %}table-danger-custom{% endif %}">
+                            <td class="text-muted text-nowrap">{{ alert.created_at.strftime('%Y-%m-%d %H:%M:%S UTC') }}</td>
+                            <td>
+                                <a href="{{ url_for('evidence.detail', id=alert.evidence.id) }}" class="fw-bold">
+                                    {{ alert.evidence.title }}
+                                </a>
+                                <div class="text-muted small">File: {{ alert.evidence.file_name }}</div>
+                            </td>
+                            <td>
+                                <span class="badge {% if alert.alert_type == 'HASH_MISMATCH' %}bg-danger text-white{% else %}bg-warning text-dark{% endif %}">
+                                    {{ alert.alert_type }}
+                                </span>
+                            </td>
+                            <td class="small" style="max-width: 300px;">{{ alert.description }}</td>
+                            <td>
+                                {% if alert.status == 'Active' %}
+                                    <span class="badge bg-danger"><i class="fas fa-triangle-exclamation me-1"></i> Active</span>
+                                {% else %}
+                                    <span class="badge bg-success"><i class="fas fa-circle-check me-1"></i> Resolved</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if alert.status == 'Active' %}
+                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#resolveModal-{{ alert.id }}">
+                                        <i class="fas fa-check-double me-1"></i> Resolve
+                                    </button>
+
+                                    <!-- Resolution Modal -->
+                                    <div class="modal fade" id="resolveModal-{{ alert.id }}" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Resolve Tamper Incident</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form action="{{ url_for('admin.resolve_alert', alert_id=alert.id) }}" method="POST">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <div class="modal-body">
+                                                        <p class="small text-muted">Document why this alert is being marked as resolved.</p>
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Resolution Notes</label>
+                                                            <textarea name="note" class="form-control" rows="4" placeholder="Enter resolution details..." required></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                        <button type="submit" class="btn btn-primary">Submit Resolution</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted small">Closed</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="fas fa-shield-check fs-4 d-block mb-2 text-success"></i> No tampering incidents logged. Integrity is secure.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.table-danger-custom {
+    background-color: rgba(239, 68, 68, 0.05) !important;
+}
+.animate-pulse {
+    animation: pulse-animation 2s infinite;
+}
+@keyframes pulse-animation {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+}
+</style>
+{% endblock %}

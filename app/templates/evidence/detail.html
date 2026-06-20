@@ -1,0 +1,209 @@
+{% extends 'base.html' %}
+{% block title %}Digital Evidence Integrity System — Evidence Detail{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-microscope me-2 text-primary"></i>{{ evidence.title }}</h1>
+        <p class="page-subtitle">{{ evidence.file_name }} &mdash; {{ (evidence.file_size / 1024 / 1024)|round(3) }} MB &mdash; {{ evidence.mime_type }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('evidence.list_evidence') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Back
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+
+        <!-- Hash & Status Card -->
+        <div class="card mb-4">
+            <div class="card-header justify-content-between">
+                <span><i class="fas fa-shield-halved text-primary me-2"></i>Evidence Record</span>
+                <span class="badge {% if evidence.status == 'Verified' %}badge-verified{% elif evidence.status == 'Tampered' %}badge-tampered{% else %}badge-warning{% endif %} py-2 px-3" id="evidence-status-badge">
+                    {{ evidence.status }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-4" style="font-size:0.9rem;">
+                    <div class="col-md-6">
+                        <div class="text-muted mb-1">File Name</div>
+                        <strong>{{ evidence.file_name }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted mb-1">Category</div>
+                        <strong>{{ evidence.category }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted mb-1">Upload Timestamp</div>
+                        <strong>{{ evidence.upload_date.strftime('%Y-%m-%d %H:%M:%S') }}</strong>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-muted mb-1">Encryption</div>
+                        <strong class="text-success"><i class="fas fa-lock me-1"></i>AES-256 CBC</strong>
+                    </div>
+                    <div class="col-12">
+                        <div class="text-muted mb-1">SHA-256 Hash</div>
+                        <code style="font-size:0.82rem; word-break:break-all;">{{ evidence.original_hash }}</code>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="btn btn-primary" id="btn-verify-evidence" data-id="{{ evidence.id }}">
+                        <i class="fas fa-shield-halved me-2"></i>Verify Integrity
+                    </button>
+                    <a href="{{ url_for('evidence.download', id=evidence.id) }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-download me-2"></i>Download
+                    </a>
+                    {% if current_user.has_role('admin') or current_user.has_role('investigator') %}
+                    <a href="{{ url_for('custody.transfer', evidence_id=evidence.id) }}" class="btn btn-outline-warning">
+                        <i class="fas fa-right-left me-2"></i>Transfer Custody
+                    </a>
+                    {% endif %}
+                </div>
+
+                <!-- Verification Result -->
+                <div class="mt-3 d-none" id="verification-results-container"></div>
+            </div>
+        </div>
+
+        <!-- File Preview Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="fas fa-eye text-primary me-2"></i>File Preview
+            </div>
+            <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                {% set ext = evidence.file_name.split('.')[-1].lower() %}
+                {% if ext in ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'] %}
+                    <!-- Image Preview -->
+                    <img src="{{ url_for('evidence.download', id=evidence.id) }}" alt="{{ evidence.file_name }}" class="img-fluid" style="max-width:100%; border-radius:4px;">
+                {% elif ext == 'pdf' %}
+                    <!-- PDF Preview -->
+                    <iframe src="{{ url_for('evidence.download', id=evidence.id) }}#toolbar=0" style="width:100%; height:450px; border:none; border-radius:4px;"></iframe>
+                {% elif ext in ['txt', 'csv', 'json', 'xml', 'log', 'html'] %}
+                    <!-- Text File Preview -->
+                    <div style="background:#f5f5f5; padding:12px; border-radius:4px; font-family:monospace; font-size:0.85rem; color:#333; overflow-x:auto; max-height:450px; white-space:pre-wrap; word-wrap:break-word;" id="text-preview">
+                        Loading...
+                    </div>
+                {% else %}
+                    <!-- Generic File Type -->
+                    <div class="text-center py-5">
+                        <i class="fas fa-file fa-3x text-muted mb-3" style="display:block;"></i>
+                        <p class="text-muted mb-2">{{ ext.upper() }} File</p>
+                        <p class="small text-muted mb-3">Preview not available for this file type</p>
+                        <a href="{{ url_for('evidence.download', id=evidence.id) }}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-download me-1"></i>Download to View
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Metadata Card -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-tags text-primary me-2"></i>Extracted Metadata
+            </div>
+            {% if evidence.metadata_entries %}
+            <div class="table-responsive">
+                <table class="table mb-0" style="font-size:0.88rem;">
+                    <thead>
+                        <tr>
+                            <th style="width:40%">Tag</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for meta in evidence.metadata_entries %}
+                        <tr>
+                            <td class="text-muted fw-500">{{ meta.meta_key.upper() }}</td>
+                            <td>{{ meta.meta_value }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card-body">
+                <p class="text-muted mb-0" style="font-size:0.9rem;">No metadata extracted for this file type.</p>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+
+        <!-- QR Code -->
+        <div class="card mb-4 text-center">
+            <div class="card-header">
+                <i class="fas fa-qrcode text-primary me-2"></i>QR Verification Seal
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">Scan to verify this evidence from any device</p>
+                <div class="qr-card-container mx-auto mb-3">
+                    <img src="{{ qr_url }}" alt="QR Verification" class="img-fluid" style="max-height:160px;">
+                </div>
+                <a href="{{ url_for('evidence.public_verify', hash_val=evidence.original_hash) }}" target="_blank" style="font-size:0.85rem;">
+                    Public Verification Link <i class="fas fa-external-link-alt ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Chain of Custody Timeline -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-history text-primary me-2"></i>Chain of Custody
+            </div>
+            <div class="card-body">
+                {% if evidence.custody_records %}
+                <div class="timeline">
+                    {% for log in evidence.custody_records %}
+                    <div class="timeline-item">
+                        <div class="fw-600" style="font-size:0.88rem; font-weight:600;">{{ log.action }}</div>
+                        <div class="text-muted" style="font-size:0.8rem;">
+                            <i class="fas fa-user me-1"></i>{{ log.to_user.fullname if log.to_user else 'System' }}<br>
+                            <i class="fas fa-clock me-1"></i>{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}
+                        </div>
+                        {% if log.remarks %}
+                        <div class="mt-2 p-2 rounded" style="background:var(--bg); font-size:0.78rem; color:var(--text-muted);">
+                            <em>"{{ log.remarks }}"</em>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted mb-0" style="font-size:0.88rem;">No custody records yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// Load text file preview
+document.addEventListener('DOMContentLoaded', function() {
+    const textPreviewElement = document.getElementById('text-preview');
+    if (textPreviewElement && textPreviewElement.innerText === 'Loading...') {
+        fetch('{{ url_for("evidence.download", id=evidence.id) }}')
+            .then(response => response.text())
+            .then(text => {
+                textPreviewElement.innerText = text.substring(0, 10000); // Limit to 10k chars
+                if (text.length > 10000) {
+                    textPreviewElement.innerText += '\n\n... [File truncated - Download to see full content]';
+                }
+            })
+            .catch(error => {
+                textPreviewElement.innerText = 'Error loading preview: ' + error.message;
+            });
+    }
+});
+</script>
+
+{% endblock %}

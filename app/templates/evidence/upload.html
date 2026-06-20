@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}Digital Evidence Integrity System — Upload Evidence{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title"><i class="fas fa-file-shield me-2 text-primary"></i>Upload Evidence</h1>
+        <p class="page-subtitle">Files are hashed with SHA-256 and encrypted with AES-256 before storage</p>
+    </div>
+    <a href="{{ url_for('evidence.list_evidence') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fas fa-arrow-left me-1"></i> Back to Vault
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Upload Form -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-upload text-primary"></i> Evidence Details
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('evidence.upload') }}" enctype="multipart/form-data">
+                    {{ form.hidden_tag() }}
+
+                    <!-- File Drop Zone -->
+                    <div class="mb-4">
+                        <label class="form-label">Evidence File(s)</label>
+                        <div class="upload-dropzone" id="dropzone">
+                            <i class="fas fa-cloud-arrow-up"></i>
+                            <h6 class="mt-2 mb-1">Drag &amp; drop files here</h6>
+                            <p class="small mb-2 text-muted">or click to browse</p>
+                            <span class="badge bg-light text-muted border" style="font-size:0.75rem;">Max 50 MB per file</span>
+                            <input type="file" id="files-input" name="files" class="d-none" multiple required>
+                        </div>
+                        <ul class="list-group mt-3" id="uploaded-file-list">
+                            <li class="list-group-item text-muted border-0 ps-0" style="font-size:0.88rem;">No files selected</li>
+                        </ul>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="title" class="form-label">Evidence Title</label>
+                            {{ form.title(class="form-control", placeholder="e.g. HDD Disk Image", id="title") }}
+                            {% if form.title.errors %}
+                                {% for e in form.title.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="category" class="form-label">Category</label>
+                            {{ form.category(class="form-select", id="category") }}
+                            {% if form.category.errors %}
+                                {% for e in form.category.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label for="case_id" class="form-label">Assign to Case</label>
+                            {{ form.case_id(class="form-select", id="case_id") }}
+                            {% if form.case_id.errors %}
+                                {% for e in form.case_id.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="col-12">
+                            <label for="remarks" class="form-label">Chain of Custody Remarks</label>
+                            {{ form.remarks(class="form-control", rows="3", placeholder="Describe acquisition method, source device, condition, etc.", id="remarks") }}
+                            {% if form.remarks.errors %}
+                                {% for e in form.remarks.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid mt-4">
+                        {{ form.submit(class="btn btn-primary py-2") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Panel -->
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-circle-info text-primary"></i> Upload Guidelines
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled" style="font-size:0.88rem;">
+                    <li class="mb-3 d-flex gap-2">
+                        <i class="fas fa-hashtag text-primary mt-1 flex-shrink-0"></i>
+                        <div><strong>SHA-256 Hashing</strong><br>
+                        <span class="text-muted">File is hashed before encryption to create a tamper-proof signature.</span></div>
+                    </li>
+                    <li class="mb-3 d-flex gap-2">
+                        <i class="fas fa-lock text-success mt-1 flex-shrink-0"></i>
+                        <div><strong>AES-256 Encryption</strong><br>
+                        <span class="text-muted">Files are encrypted at rest. Original copies are never stored unencrypted.</span></div>
+                    </li>
+                    <li class="mb-3 d-flex gap-2">
+                        <i class="fas fa-tags text-warning mt-1 flex-shrink-0"></i>
+                        <div><strong>Metadata Extraction</strong><br>
+                        <span class="text-muted">EXIF, PDF, and media metadata is extracted and stored automatically.</span></div>
+                    </li>
+                    <li class="d-flex gap-2">
+                        <i class="fas fa-link text-info mt-1 flex-shrink-0"></i>
+                        <div><strong>Custody Logging</strong><br>
+                        <span class="text-muted">An initial custody record is created automatically for audit trail.</span></div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
