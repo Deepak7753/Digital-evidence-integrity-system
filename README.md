@@ -9,6 +9,7 @@ Digital Evidence Integrity System Evidence Vault is a production-grade digital f
 
 * **Backend:** Python Flask with Blueprint Modular Architecture
 * **Database Management:** Flask-SQLAlchemy (ORM) supporting MySQL
+* **Version control:** `.gitignore` now excludes SQLite database files (`*.db`, `instance/*.db`).
 * **Cryptography Core:** AES-256 CBC Mode File Encryption via `pycryptodome` & Streaming SHA-256 Verification Hashing
 * **Access Control:** Role-Based Access Control (RBAC) with `@role_required` decorator supporting Admin, Investigator, and Auditor roles
 * **Reporting:** Dynamically generated PDF analysis reports via `ReportLab` incorporating live metadata scans & custom QR verification codes
